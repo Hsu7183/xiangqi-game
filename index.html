@@ -3,64 +3,54 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>極簡網路象棋</title>
-
-<!-- ===== 美化 ===== -->
+<title>親子象棋 (Xiangqi)</title>
+<!-- ===== 樣式 ===== -->
 <style>
   :root {
     --cell: 60px;
-    --wood-light: #f5deb3;   /* 淺木色 */
-    --wood-dark:  #deb887;   /* 深木色 */
+    --wood-light: #f6e4c0;
+    --wood-dark:  #d3a46f;
     --line:       #3d2b1f;
+    --orange:     #ff6b00;
   }
-
-  /* 基本排版 --------------------------------------------------------- */
-  * { box-sizing:border-box; -webkit-user-select:none; user-select:none; }
+  *{box-sizing:border-box;-webkit-user-select:none;user-select:none}
   body{
-    margin:0; min-height:100vh;
-    display:flex; flex-direction:column; align-items:center;
+    margin:0;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;
     font-family:"Segoe UI",Roboto,"Noto Sans",sans-serif;
-    background:radial-gradient(circle at top,#fff 0%,#e1e9f0 100%);
+    background:linear-gradient(135deg,#fdfbfb 0%,#ebedee 100%);
   }
-  h1{ margin:1rem 0 .3rem; font-size:1.8rem; color:#333;
-      text-shadow:0 1px 2px rgba(0,0,0,.1); }
+  h1{font-size:2rem;margin:0 0 1rem;text-align:center;color:#333;}
 
-  /* 按鈕 & 下拉 ------------------------------------------------------- */
-  button,select{
-    padding:.55rem 1.1rem; font-size:1rem; border:none;
-    border-radius:8px; cursor:pointer; transition:.2s;
-  }
-  button{
-    background:#ff6b00; color:#fff;
-    box-shadow:0 2px 6px rgba(0,0,0,.15);
-  }
-  button:hover{ transform:translateY(-2px);
-    box-shadow:0 4px 10px rgba(0,0,0,.2); }
-  select{ background:#fff; color:#333; border:1px solid #ccc; }
+  /* ===== 卡片容器 ===== */
+  .card{background:#fff;border-radius:14px;padding:2rem 2.5rem;box-shadow:0 8px 20px rgba(0,0,0,.15);display:flex;flex-direction:column;align-items:center}
 
-  /* 首頁 ------------------------------------------------------------- */
-  #menu        { display:flex; flex-direction:column; align-items:center;
-                 margin-top:2rem; gap:.8rem; }
-  #difficultyRow{ display:flex; align-items:center; gap:.5rem; }
+  button,select{padding:.6rem 1.4rem;font-size:1rem;border:none;border-radius:10px;cursor:pointer;transition:.2s;font-weight:600}
+  button{background:var(--orange);color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+  button:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.25)}
+  select{background:#f9f9f9;border:1px solid #ccc}
 
-  /* 棋盤 & 工具列 ----------------------------------------------------- */
-  #board{
-    border:4px solid var(--line); border-radius:6px;
-    touch-action:none;             /* 允許觸控 */
-    box-shadow:0 6px 16px rgba(0,0,0,.25);
-  }
-  #toolbar{ margin-top:.6rem; display:flex; gap:.8rem; }
-  #msg     { margin-top:.6rem; font-weight:600; font-size:1.1rem; color:#444; }
+  #menu{gap:.9rem}
+  #difficultyRow{display:flex;align-items:center;gap:.5rem}
+
+  #board{border:4px solid var(--line);border-radius:8px;touch-action:none;box-shadow:0 6px 16px rgba(0,0,0,.25);margin-top:1rem}
+  #toolbar{margin-top:.8rem;gap:1rem;display:flex;justify-content:center}
+  #msg{margin-top:.6rem;font-weight:600;font-size:1.1rem;color:#444;text-align:center}
+
+  /* ===== 時間顯示 ===== */
+  #clockWrapper{margin-top:.6rem;display:flex;justify-content:center;gap:3rem;font-size:1.1rem;font-weight:700}
+  .timeBox{background:#fff;border:2px solid var(--orange);border-radius:8px;padding:.3rem 1rem;min-width:80px;text-align:center}
+
+  /* ===== 結束畫面 ===== */
+  #overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;justify-content:center;align-items:center;z-index:100;visibility:hidden;opacity:0;transition:.3s}
+  #overlay.show{visibility:visible;opacity:1}
+  #overlayContent{background:#fff;border-radius:16px;padding:2rem 3rem;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,.3)}
+  #overlayContent h2{font-size:2rem;margin:0 0 1rem;color:var(--orange)}
 </style>
 </head>
-
 <body>
-  <h1>極簡象棋 (Xiangqi)</h1>
-
-  <!-- ===== 首頁選單 ===== -->
-  <div id="menu">
+  <div class="card" id="menu">
+    <h1>親子象棋 (Xiangqi)</h1>
     <button id="singleBtn">單人模式 (VS 電腦)</button>
-
     <div id="difficultyRow">
       <label for="level">難度：</label>
       <select id="level">
@@ -69,370 +59,126 @@
         <option value="hard">困難</option>
       </select>
     </div>
-
+    <div id="timeRow" style="margin-top:.3rem;display:flex;align-items:center;gap:.5rem">
+      <label for="timeSelect">每方時間：</label>
+      <select id="timeSelect">
+        <option value="300">5 分鐘</option>
+        <option value="600">10 分鐘</option>
+        <option value="900">15 分鐘</option>
+      </select>
+    </div>
     <button id="doubleBtn">雙人模式 (本機)</button>
   </div>
 
-  <!-- ===== 棋盤 & 工具列 ===== -->
   <canvas id="board" width="540" height="600" hidden></canvas>
+
+  <div id="clockWrapper" hidden>
+    <div class="timeBox" id="redClock">05:00</div>
+    <div class="timeBox" id="blackClock">05:00</div>
+  </div>
 
   <div id="toolbar" hidden>
     <button id="restartBtn">重新開始</button>
     <button id="backBtn">返回首頁</button>
   </div>
-
   <div id="msg"></div>
 
-<!-- ================ 腳本 ================= -->
+  <!-- 結束畫面 -->
+  <div id="overlay">
+    <div id="overlayContent">
+      <h2 id="resultText">紅方勝！</h2>
+      <button onclick="hideOverlay()">關閉</button>
+    </div>
+  </div>
+
+<!-- ===== 腳本 ===== -->
 <script>
-/* -------- 常數 & 資料 -------- */
-const ROWS = 10, COLS = 9, CELL = 60;
+/***************** 音效 *****************/
+const moveSound = new Audio('https://actions.google.com/sounds/v1/cartoon/pop.ogg');
+const endSound  = new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg');
+moveSound.volume = 0.4; endSound.volume = 0.5;
 
-const PIECE_INFO = {
-  r:{name:'車',side:'black'}, n:{name:'馬',side:'black'},
-  b:{name:'象',side:'black'}, a:{name:'士',side:'black'},
-  k:{name:'將',side:'black'}, c:{name:'炮',side:'black'},
-  p:{name:'卒',side:'black'},
-  R:{name:'車',side:'red'},  N:{name:'馬',side:'red'},
-  B:{name:'相',side:'red'},  A:{name:'仕',side:'red'},
-  K:{name:'帥',side:'red'},  C:{name:'炮',side:'red'},
-  P:{name:'兵',side:'red'}
-};
+/***************** 基本資料 *****************/
+const ROWS=10,COLS=9,CELL=60;
+const INFO={r:{n:'車',s:'black'},n:{n:'馬',s:'black'},b:{n:'象',s:'black'},a:{n:'士',s:'black'},k:{n:'將',s:'black'},c:{n:'炮',s:'black'},p:{n:'卒',s:'black'},R:{n:'車',s:'red'},N:{n:'馬',s:'red'},B:{n:'相',s:'red'},A:{n:'仕',s:'red'},K:{n:'帥',s:'red'},C:{n:'炮',s:'red'},P:{n:'兵',s:'red'}};
+const VAL={k:1e4,r:500,n:300,b:250,a:120,c:280,p:70};
+const initBoard=()=>[['r','n','b','a','k','a','b','n','r'],[,,,,,,,,],[,'c',,,,,,'c',],[ 'p',, 'p',, 'p',, 'p',, 'p'],[,,,,,,,,],[,,,,,,,,],[ 'P',, 'P',, 'P',, 'P',, 'P'],[,'C',,,,,,'C',],[,,,,,,,,],['R','N','B','A','K','A','B','N','R']];
 
-const PIECE_VALUE = { k:1e4, r:500, n:300, b:250, a:120, c:280, p:70 };
+/***************** DOM *****************/
+const canvas=document.getElementById('board');const ctx=canvas.getContext('2d');
+const menu=document.getElementById('menu');const toolbar=document.getElementById('toolbar');
+const msgEl=document.getElementById('msg');const clockWrap=document.getElementById('clockWrapper');
+const redClockEl=document.getElementById('redClock');const blackClockEl=document.getElementById('blackClock');
+const overlay=document.getElementById('overlay');const resultText=document.getElementById('resultText');
 
-function initBoard() {
-  return [
-    ['r','n','b','a','k','a','b','n','r'],
-    [ , , , , , , , , ],
-    [ ,'c', , , , , ,'c', ],
-    ['p', , 'p', , 'p', , 'p', , 'p'],
-    [ , , , , , , , , ],
-    [ , , , , , , , , ],
-    ['P', , 'P', , 'P', , 'P', , 'P'],
-    [ ,'C', , , , , ,'C', ],
-    [ , , , , , , , , ],
-    ['R','N','B','A','K','A','B','N','R']
-  ];
+/***************** 狀態 *****************/
+let board,current,selected,running,mode,aiSide,aiDepth;
+let redTime,blackTime,totalTime,activeTimer,timerId;
+
+/***************** 入口按鈕 *****************/
+document.getElementById('singleBtn').onclick=()=>startGame('single');
+document.getElementById('doubleBtn').onclick=()=>startGame('double');
+document.getElementById('restartBtn').onclick=()=>startGame(mode);
+document.getElementById('backBtn').onclick=goHome;
+
+function goHome(){clearTimer();running=false;canvas.hidden=true;toolbar.hidden=true;clockWrap.hidden=true;menu.style.display='flex';msgEl.textContent='';}
+
+/***************** 開始遊戲 *****************/
+function startGame(m){mode=m;board=initBoard();current='red';selected=null;running=true;
+ aiSide=(mode==='single')?'black':null;const diff=document.getElementById('level').value;aiDepth=diff==='easy'?1:diff==='normal'?2:3;
+ totalTime=parseInt(document.getElementById('timeSelect').value,10);redTime=blackTime=totalTime;
+ updateClockUI();
+ menu.style.display='none';canvas.hidden=false;toolbar.hidden=false;clockWrap.hidden=false;
+ msgEl.textContent='紅方先行';render();resetTimer('red'); if(aiSide==='red') setTimeout(aiMove,300);
 }
 
-/* -------- 介面元素 -------- */
-const canvas   = document.getElementById('board');
-const ctx      = canvas.getContext('2d');
-const msgEl    = document.getElementById('msg');
-const menuEl   = document.getElementById('menu');
-const toolbarEl= document.getElementById('toolbar');
-const levelSel = document.getElementById('level');
+/***************** 計時器 *****************/
+function resetTimer(side){clearTimer();activeTimer=side;timerId=setInterval(()=>{if(side==='red'){redTime--;if(redTime<=0){gameOver('紅方超時敗！');}}else{blackTime--;if(blackTime<=0){gameOver('黑方超時敗！');}}updateClockUI();},1000);}function clearTimer(){if(timerId)clearInterval(timerId);}function updateClockUI(){redClockEl.textContent=formatTime(redTime);blackClockEl.textContent=formatTime(blackTime);}const formatTime=s=>{const m=Math.floor(s/60).toString().padStart(2,'0');const sec=(s%60).toString().padStart(2,'0');return `${m}:${sec}`;};
 
-document.getElementById('singleBtn').onclick = () => startGame('single');
-document.getElementById('doubleBtn').onclick = () => startGame('double');
-document.getElementById('restartBtn').onclick = () => startGame(mode);
-document.getElementById('backBtn')  .onclick = goHome;
-
-/* -------- 狀態 -------- */
-let board, current, selected, running, mode, aiSide, aiDepth;
-
-/* -------- 遊戲流程 -------- */
-function startGame(m){
-  mode      = m;
-  board     = initBoard();
-  current   = 'red';
-  selected  = null;
-  running   = true;
-  aiSide    = (mode==='single') ? 'black' : null;
-
-  const diff = levelSel.value;
-  aiDepth = diff==='easy' ? 1 : diff==='normal' ? 2 : 3;
-
-  menuEl.style.display = 'none';
-  canvas.hidden        = false;
-  toolbarEl.hidden     = false;
-  msgEl.textContent    = '紅方先行';
-
-  render();
-  if (aiSide === 'red') setTimeout(aiMove, 200);
+/***************** 工具 *****************/
+const inR=(r,c)=>r>=0&&r<ROWS&&c>=0&&c<COLS;const sameS=(a,b)=>a&&b&&INFO[a].s===INFO[b].s;const palace=(s,r,c)=>s==='red'?r>=7&&c>=3&&c<=5:r<=2&&c>=3&&c<=5;const across=(s,r)=>s==='red'?r<=4:r>=5;
+function clearP(sr,sc,tr,tc){const dr=Math.sign(tr-sr),dc=Math.sign(tc-sc);for(let r=sr+dr,c=sc+dc;r!==tr||c!==tc;r+=dr,c+=dc)if(board[r][c])return false;return true;}
+function can(sr,sc,tr,tc){if(!inR(tr,tc)||sameS(board[sr][sc],board[tr][tc]))return false;const p=board[sr][sc];if(!p)return false;const s=INFO[p].s;const dr=tr-sr,dc=tc-sc,aR=Math.abs(dr),aC=Math.abs(dc);
+ switch(p.toLowerCase()){
+  case'r':return(sr===tr||sc===tc)&&clearP(sr,sc,tr,tc);
+  case'n':if(!((aR===2&&aC===1)||(aR===1&&aC===2)))return false;const lr=sr+(aR===2?dr/2:0),lc=sc+(aC===2?dc/2:0);return !board[lr][lc];
+  case'b':if(aR!==2||aC!==2||across(s,tr))return false;return !board[sr+dr/2][sc+dc/2];
+  case'a':return aR===1&&aC===1&&palace(s,tr,tc);
+  case'k':return aR+aC===1&&palace(s,tr,tc);
+  case'c':if(!(sr===tr||sc===tc))return false;let cnt=0;for(let r=sr+Math.sign(dr),c=sc+Math.sign(dc);r!==tr||c!==tc;r+=Math.sign(dr),c+=Math.sign(dc))if(board[r][c])cnt++;return board[tr][tc]?cnt===1:cnt===0;
+  case'p':if(s==='red'){if(!across(s,sr)&&dr!==-1)return false;if(across(s,sr)){if(dr===-1&&dc===0)return true;if(dr===0&&aC===1)return true;return false;}return dr===-1&&dc===0;}else{if(!across(s,sr)&&dr!==1)return false;if(across(s,sr)){if(dr===1&&dc===0)return true;if(dr===0&&aC===1)return true;return false;}return dr===1&&dc===0;}
+ }
 }
+function listMoves(side,b=board){const mv=[];for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const p=b[r][c];if(!p||INFO[p].s!==side)continue;for(let tr=0;tr<ROWS;tr++)for(let tc=0;tc<COLS;tc++)if(canBoard(b,r,c,tr,tc))mv.push({sr:r,sc:c,tr,tc});}return mv;}
+function canBoard(b,sr,sc,tr,tc){const old=board;board=b;const ok=can(sr,sc,tr,tc);board=old;return ok;}
+function evalB(b){let s=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const p=b[r][c];if(!p)continue;const v=VAL[p.toLowerCase()]||0;s+=(INFO[p].s==='red'?v:-v);}return s;}
+const clone=b=>b.map(r=>r.slice());const doM=(b,m)=>{const nb=clone(b);nb[m.tr][m.tc]=nb[m.sr][m.sc];nb[m.sr][m.sc]=undefined;return nb;};
+function search(b,d,side,a,beta){if(d===0)return evalB(b);const moves=listMoves(side,b);if(!moves.length)return side==='red'?-1e5:1e5;let best=side==='red'? -Infinity:Infinity;for(const mv of moves){const v=search(doM(b,mv),d-1,side==='red'?'black':'red',a,beta);if(side==='red'){best=Math.max(best,v);a=Math.max(a,v);if(beta<=a)break;}else{best=Math.min(best,v);beta=Math.min(beta,v);if(beta<=a)break;}}return best;}
+function bestMove(d){const moves=listMoves(aiSide);let pick=moves[0],best=aiSide==='red'? -Infinity:Infinity;for(const mv of moves){const val=search(doM(board,mv),d-1,aiSide==='red'?'black':'red',-Infinity,Infinity);if((aiSide==='red'&&val>best)||(aiSide==='black'&&val<best)){best=val;pick=mv;}}const rnd=d===1?0.3:d===2?0.1:0;if(Math.random()<rnd)pick=moves[Math.floor(Math.random()*moves.length)];return pick;}
 
-function goHome(){
-  running=false;
-  canvas.hidden=true;
-  toolbarEl.hidden=true;
-  menuEl.style.display='flex';
-  msgEl.textContent='';
-}
+/***************** 畫面 *****************/
+function drawBoard(){const cs=getComputedStyle(document.documentElement);const l=cs.getPropertyValue('--wood-light').trim()||'#f5deb3';const d=cs.getPropertyValue('--wood-dark').trim()||'#deb887';ctx.clearRect(0,0,canvas.width,canvas.height);const g=ctx.createLinearGradient(0,0,canvas.width,canvas.height);g.addColorStop(0,l);g.addColorStop(1,d);ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.strokeStyle='var(--line)';ctx.lineWidth=2;for(let r=0;r<ROWS;r++){ctx.beginPath();ctx.moveTo(CELL/2,CELL/2+r*CELL);ctx.lineTo(canvas.width-CELL/2,CELL/2+r*CELL);ctx.stroke();}for(let c=0;c<COLS;c++){ctx.beginPath();ctx.moveTo(CELL/2+c*CELL,CELL/2);ctx.lineTo(CELL/2+c*CELL,CELL/2+4*CELL);ctx.stroke();ctx.beginPath();ctx.moveTo(CELL/2+c*CELL,CELL/2+5*CELL);ctx.lineTo(CELL/2+c*CELL,CELL/2+9*CELL);ctx.stroke();}
+ ctx.font='24px serif';ctx.fillStyle='#444';ctx.textAlign='center';ctx.fillText('楚 河',CELL*2.5,CELL*5-12);ctx.fillText('漢 界',CELL*6.5,CELL*5-12);}function drawPieces(){ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='28px serif';for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){const p=board[r][c];if(!p)continue;const {n,side}=INFO[p];const x=CELL/2+c*CELL,y=CELL/2+r*CELL;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,24,0,Math.PI*2);ctx.shadowColor='rgba(0,0,0,.25)';ctx.shadowBlur=4;ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='var(--line)';ctx.stroke();ctx.fillStyle=side==='red'?'#d32f2f':'#1a237e';ctx.fillText(n,x,y+1);}if(selected){ctx.strokeStyle:'#2e7d32';ctx.lineWidth=3;ctx.strokeRect(selected.sc*CELL+4,selected.sr*CELL+4,CELL-8,CELL-8);}}
+const render=()=>{drawBoard();drawPieces();};
 
-/* -------- 工具 -------- */
-const inRange   = (r,c)=> r>=0 && r<ROWS && c>=0 && c<COLS;
-const sameSide  = (p1,p2)=> p1 && p2 && PIECE_INFO[p1].side===PIECE_INFO[p2].side;
-const palace    = (side,r,c)=> side==='red' ? (r>=7&&c>=3&&c<=5) : (r<=2&&c>=3&&c<=5);
-const acrossRiver=(side,r)=> side==='red'? r<=4 : r>=5;
+/***************** 互動 *****************/
+function pointer(e){if(!running)return;const rect=canvas.getBoundingClientRect();const x=(e.clientX||e.touches[0].clientX)-rect.left;const y=(e.clientY||e.touches[0].clientY)-rect.top;const c=Math.floor(x/CELL),r=Math.floor(y/CELL);if(!inR(r,c))return;
+ if(selected){if(r===selected.sr&&c===selected.sc){selected=null;render();return;}if(can(selected.sr,selected.sc,r,c)){movePiece(selected.sr,selected.sc,r,c);}else{const p=board[r][c];if(p&&INFO[p].s===current){selected={sr:r,sc:c};render();}}}else{const p=board[r][c];if(p&&INFO[p].s===current){selected={sr:r,sc:c};render();}}}
+canvas.addEventListener('pointerdown',pointer);canvas.addEventListener('touchstart',pointer);
 
-/* -------- 合法走子 -------- */
-function clearPath(sr,sc,tr,tc){
-  const dr=Math.sign(tr-sr), dc=Math.sign(tc-sc);
-  for(let r=sr+dr, c=sc+dc; r!==tr || c!==tc; r+=dr, c+=dc)
-    if(board[r][c]) return false;
-  return true;
-}
-function canMove(sr,sc,tr,tc){
-  if(!inRange(tr,tc) || sameSide(board[sr][sc], board[tr][tc])) return false;
-  const p = board[sr][sc]; if(!p) return false;
-  const side=PIECE_INFO[p].side;
-  const dr=tr-sr, dc=tc-sc, aR=Math.abs(dr), aC=Math.abs(dc);
+/***************** 移動 *****************/
+function movePiece(sr,sc,tr,tc){moveSound.currentTime=0;moveSound.play();const captured=board[tr][tc];board[tr][tc]=board[sr][sc];board[sr][sc]=undefined;if(captured&&captured.toLowerCase()==='k'){gameOver(current==='red'?'紅':'黑'+'方勝！');return;}
+ current=current==='red'?'black':'red';selected=null;msgEl.textContent=(current==='red'?'紅':'黑')+'方行棋';render();resetTimer(current);if(running&&mode==='single'&&current===aiSide)setTimeout(aiMove,300);}
 
-  switch(p.toLowerCase()){
-    case 'r': return (sr===tr || sc===tc) && clearPath(sr,sc,tr,tc);
-    case 'n':
-      if(!((aR===2&&aC===1)||(aR===1&&aC===2))) return false;
-      const legR = sr + (aR===2? dr/2 : 0);
-      const legC = sc + (aC===2? dc/2 : 0);
-      return !board[legR][legC];
-    case 'b':
-      if(aR!==2||aC!==2 || acrossRiver(side,tr)) return false;
-      return !board[sr+dr/2][sc+dc/2];
-    case 'a':
-      return aR===1 && aC===1 && palace(side,tr,tc);
-    case 'k':
-      return (aR+aC===1) && palace(side,tr,tc);
-    case 'c': {
-      if(!(sr===tr || sc===tc)) return false;
-      let cnt=0;
-      for(let r=sr+Math.sign(dr),c=sc+Math.sign(dc); r!==tr||c!==tc; r+=Math.sign(dr),c+=Math.sign(dc))
-        if(board[r][c]) cnt++;
-      return board[tr][tc] ? cnt===1 : cnt===0;
-    }
-    case 'p':
-      if(side==='red'){
-        if(!acrossRiver(side,sr) && dr!==-1) return false;
-        if(acrossRiver(side,sr)){
-          if(dr===-1 && dc===0) return true;
-          if(dr===0 && aC===1)  return true;
-          return false;
-        }
-        return dr===-1 && dc===0;
-      }else{
-        if(!acrossRiver(side,sr) && dr!==1) return false;
-        if(acrossRiver(side,sr)){
-          if(dr===1 && dc===0)  return true;
-          if(dr===0 && aC===1)  return true;
-          return false;
-        }
-        return dr===1 && dc===0;
-      }
-  }
-  return false;
-}
+/***************** AI *****************/
+function aiMove(){if(!running)return;const m=bestMove(aiDepth);if(!m){gameOver('AI 無合法著，'+(aiSide==='red'?'黑':'紅')+'方勝！');return;}movePiece(m.sr,m.sc,m.tr,m.tc);}
 
-/* -------- 列出所有走法 (AI 用) -------- */
-function listMoves(side,b=board){
-  const mv=[];
-  for(let r=0;r<ROWS;r++)
-    for(let c=0;c<COLS;c++){
-      const p=b[r][c];
-      if(!p || PIECE_INFO[p].side!==side) continue;
-      for(let tr=0;tr<ROWS;tr++)
-        for(let tc=0;tc<COLS;tc++)
-          if(canMoveBoard(b,r,c,tr,tc)) mv.push({sr:r,sc:c,tr,tc});
-    }
-  return mv;
-}
-function canMoveBoard(b,sr,sc,tr,tc){
-  const oldBoard = board; board=b;    // 暫時替換 → 沿用 canMove
-  const ok = canMove(sr,sc,tr,tc);
-  board = oldBoard;
-  return ok;
-}
+/***************** 結束 *****************/
+function gameOver(text){running=false;clearTimer();msgEl.textContent=text;resultText.textContent=text;overlay.classList.add('show');endSound.currentTime=0;endSound.play();}
+function hideOverlay(){overlay.classList.remove('show');}
 
-/* -------- 評分 -------- */
-function evaluate(b){
-  let s=0;
-  for(let r=0;r<ROWS;r++)
-    for(let c=0;c<COLS;c++){
-      const p=b[r][c]; if(!p) continue;
-      const v=PIECE_VALUE[p.toLowerCase()]||0;
-      s += (PIECE_INFO[p].side==='red'? v : -v);
-    }
-  return s;
-}
-
-/* -------- Minimax + αβ 剪枝 -------- */
-const clone = b=> b.map(row=>row.slice());
-const doMove= (b,m)=>{const nb=clone(b); nb[m.tr][m.tc]=nb[m.sr][m.sc]; nb[m.sr][m.sc]=undefined; return nb;};
-
-function search(b,depth,side,alpha,beta){
-  if(depth===0) return evaluate(b);
-  const moves=listMoves(side,b);
-  if(moves.length===0) return side==='red'? -1e5 : 1e5;
-
-  if(side==='red'){
-    let best=-Infinity;
-    for(const mv of moves){
-      const val=search(doMove(b,mv),depth-1,'black',alpha,beta);
-      best=Math.max(best,val); alpha=Math.max(alpha,val);
-      if(beta<=alpha) break;
-    }
-    return best;
-  }else{
-    let best=Infinity;
-    for(const mv of moves){
-      const val=search(doMove(b,mv),depth-1,'red',alpha,beta);
-      best=Math.min(best,val); beta=Math.min(beta,val);
-      if(beta<=alpha) break;
-    }
-    return best;
-  }
-}
-
-function bestMove(depth){
-  const moves=listMoves(aiSide);
-  let pick=moves[0], best= aiSide==='red'? -Infinity:Infinity;
-
-  for(const mv of moves){
-    const val=search(doMove(board,mv),depth-1, aiSide==='red'?'black':'red', -Infinity, Infinity);
-    if( (aiSide==='red' && val>best) || (aiSide==='black' && val<best)){
-      best=val; pick=mv;
-    }
-  }
-
-  /* 加點隨機性：簡單 30%、普通 10%、困難 0% */
-  const rnd = aiDepth===1?0.3: aiDepth===2?0.1:0;
-  if(Math.random()<rnd) pick = moves[Math.floor(Math.random()*moves.length)];
-
-  return pick;
-}
-
-/* -------- 繪圖 -------- */
-function drawBoard(){
-  /* 木紋漸層 */
-  const s = getComputedStyle(document.documentElement);
-  const light = s.getPropertyValue('--wood-light').trim() || '#f5deb3';
-  const dark  = s.getPropertyValue('--wood-dark').trim()  || '#deb887';
-
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const g = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
-  g.addColorStop(0, light); g.addColorStop(1, dark);
-  ctx.fillStyle=g; ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  /* 棋盤線 */
-  ctx.strokeStyle='var(--line)'; ctx.lineWidth=2;
-  for(let r=0;r<ROWS;r++){
-    ctx.beginPath();
-    ctx.moveTo(CELL/2, CELL/2 + r*CELL);
-    ctx.lineTo(canvas.width-CELL/2, CELL/2 + r*CELL);
-    ctx.stroke();
-  }
-  for(let c=0;c<COLS;c++){
-    ctx.beginPath();
-    ctx.moveTo(CELL/2 + c*CELL, CELL/2);
-    ctx.lineTo(CELL/2 + c*CELL, CELL/2 + 4*CELL);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(CELL/2 + c*CELL, CELL/2 + 5*CELL);
-    ctx.lineTo(CELL/2 + c*CELL, CELL/2 + 9*CELL);
-    ctx.stroke();
-  }
-
-  /* 河界文字 */
-  ctx.font='24px serif'; ctx.fillStyle='#444'; ctx.textAlign='center';
-  ctx.fillText('楚 河', CELL*2.5, CELL*5-12);
-  ctx.fillText('漢 界', CELL*6.5, CELL*5-12);
-}
-
-function drawPieces(){
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.font='28px serif';
-
-  for(let r=0;r<ROWS;r++)
-    for(let c=0;c<COLS;c++){
-      const p=board[r][c]; if(!p) continue;
-      const {name,side}=PIECE_INFO[p];
-      const x=CELL/2 + c*CELL, y=CELL/2 + r*CELL;
-
-      ctx.fillStyle='#fff';
-      ctx.beginPath(); ctx.arc(x,y,24,0,Math.PI*2);
-      ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=4;
-      ctx.fill(); ctx.shadowBlur=0;
-
-      ctx.strokeStyle='var(--line)'; ctx.stroke();
-
-      ctx.fillStyle= side==='red' ? '#c62828' : '#1a237e';
-      ctx.fillText(name, x, y+1);
-    }
-
-  /* highlight */
-  if(selected){
-    ctx.strokeStyle='#2e7d32'; ctx.lineWidth=3;
-    ctx.strokeRect(selected.sc*CELL+4, selected.sr*CELL+4, CELL-8, CELL-8);
-  }
-}
-
-const render = ()=>{ drawBoard(); drawPieces(); };
-
-/* -------- 互動 -------- */
-function pointerHandler(evt){
-  if(!running) return;
-  const rect=canvas.getBoundingClientRect();
-  const x=(evt.clientX||evt.touches[0].clientX)-rect.left;
-  const y=(evt.clientY||evt.touches[0].clientY)-rect.top;
-  const c=Math.floor(x/CELL), r=Math.floor(y/CELL);
-  if(!inRange(r,c)) return;
-
-  if(selected){
-    if(r===selected.sr && c===selected.sc){
-      selected=null; render(); return;
-    }
-    if(canMove(selected.sr,selected.sc,r,c)){
-      movePiece(selected.sr,selected.sc,r,c);
-    }else{
-      const p=board[r][c];
-      if(p && PIECE_INFO[p].side===current){
-        selected={sr:r,sc:c}; render();
-      }
-    }
-  }else{
-    const p=board[r][c];
-    if(p && PIECE_INFO[p].side===current){
-      selected={sr:r,sc:c}; render();
-    }
-  }
-}
-canvas.addEventListener('pointerdown',pointerHandler);
-canvas.addEventListener('touchstart',pointerHandler);
-
-/* -------- 移動 -------- */
-function movePiece(sr,sc,tr,tc){
-  const captured=board[tr][tc];
-  board[tr][tc]=board[sr][sc];
-  board[sr][sc]=undefined;
-
-  if(captured && captured.toLowerCase()==='k'){
-    running=false;
-    msgEl.textContent=(current==='red'?'紅':'黑')+'方勝！';
-    render(); return;
-  }
-
-  current=current==='red'?'black':'red';
-  selected=null;
-  msgEl.textContent=(current==='red'?'紅':'黑')+'方行棋';
-  render();
-
-  if(running && mode==='single' && current===aiSide) setTimeout(aiMove,200);
-}
-
-/* -------- AI -------- */
-function aiMove(){
-  if(!running) return;
-  const mv=bestMove(aiDepth);
-  if(!mv){
-    running=false;
-    msgEl.textContent='AI 無合法著，'+(aiSide==='red'?'黑':'紅')+'方勝！';
-    return;
-  }
-  movePiece(mv.sr,mv.sc,mv.tr,mv.tc);
-}
-
-/* -------- 初始展示 -------- */
-render();
+/* 預先渲染空棋盤 */render();
 </script>
 </body>
 </html>
